@@ -125,7 +125,7 @@ class CustomPythonCodeBlockParser(CodeBlockParser):  # type: ignore[misc]
         import_header.append(
             path_to_import_statement(Path(os.path.relpath(example.path)))
         )
-        imports_code = "\n".join(import_header)
+        imports_code = ""  # "\n".join(import_header)
 
         # Dedent the code example
         # There is also example.parsed that is already prepared, but it has

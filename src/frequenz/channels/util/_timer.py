@@ -303,6 +303,9 @@ class Timer(Receiver[timedelta]):
 
     Example: Periodic timer example
         ```python
+        from frequenz.channels.util import Timer
+        from datetime import timedelta
+
         async for drift in Timer.periodic(timedelta(seconds=1.0)):
             print(f"The timer has triggered {drift=}")
         ```
@@ -312,7 +315,8 @@ class Timer(Receiver[timedelta]):
 
         ```python
         import logging
-        from frequenz.channels.util import select, selected_from
+        from datetime import timedelta
+        from frequenz.channels.util import Timer, select, selected_from
         from frequenz.channels import Broadcast
 
         timer = Timer.timeout(timedelta(seconds=1.0), auto_start=False)
@@ -336,8 +340,9 @@ class Timer(Receiver[timedelta]):
     Example: Timeout example
         ```python
         import logging
-        from frequenz.channels.util import select, selected_from
+        from frequenz.channels.util import Timer, select, selected_from
         from frequenz.channels import Broadcast
+        from datetime import timedelta
 
         def process_data(data: int):
             logging.info("Processing data: %d", data)
