@@ -52,6 +52,12 @@ dev-mkdocs = [
 ]
 dev-mypy = [
   "mypy == 1.4.1",
+  "types-setuptools",
+  "types-colorama",
+  "types-Markdown",
+  "types-PyYAML",
+  "types-babel",
+  "types-Pygments",
   # For checking the noxfile, docs/ script, and tests
   "frequenz-channels[dev-mkdocs,dev-noxfile,dev-pytest]",
 ]
