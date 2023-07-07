@@ -1,11 +1,17 @@
-def sum_as_string(a: int, b: int) -> str:
-    """Sum two integers and return the result as a string.
+from typing import Generic, TypeVar
 
-    Args:
-        a: The first integer.
-        b: The second integer.
+from frequenz.channels import Receiver, Sender
 
-    Returns:
-        The sum of the two integers as a string.
-    """
-    ...
+
+T = TypeVar("T")
+
+
+class BcastChannel(Generic[T]):
+    def __init__(self) -> None:
+        ...
+
+    def new_receiver(self) -> Receiver[T]:
+        ...
+
+    def new_sender(self) -> Sender[T]:
+        ...

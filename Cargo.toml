@@ -10,4 +10,7 @@ crate-type = ["cdylib"]
 path = "rust/lib.rs"
 
 [dependencies]
-pyo3 = "0.19.0"
+pyo3 = "0.18.3"
+pyo3-asyncio = { version = "0.18.0", features = ["attributes", "tokio-runtime"]}
+tokio = { version = "1.29", features = ["fs", "io-util", "macros", "net", "rt", "rt-multi-thread", "sync", "time", "signal"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
