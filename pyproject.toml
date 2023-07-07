@@ -106,6 +106,7 @@ min-similarity-lines = 40
 [tool.pylint.messages_control]
 disable = [
   "too-few-public-methods",
+  "no-name-in-module",
   # disabled because it conflicts with isort
   "wrong-import-order",
   "ungrouped-imports",
