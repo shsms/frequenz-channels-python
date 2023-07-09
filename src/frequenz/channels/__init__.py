@@ -61,6 +61,8 @@ Exception classes:
   a peekable.
 """
 
+from _frequenz_channels_rust_impl import FastBroadcast
+
 from . import util
 from ._anycast import Anycast
 from ._base_classes import Peekable, Receiver, Sender
@@ -82,6 +84,7 @@ __all__ = [
     "Broadcast",
     "ChannelClosedError",
     "ChannelError",
+    "FastBroadcast",
     "Error",
     "Peekable",
     "Receiver",

@@ -13,7 +13,6 @@ struct BcastSender {
 #[pyclass]
 struct BcastReceiver {
     receiver: Arc<Mutex<Receiver<PyObject>>>,
-    result: Option<Py<PyAny>>,
 }
 
 #[pyclass]
@@ -25,7 +24,7 @@ struct BcastChannel {
 impl BcastChannel {
     #[new]
     fn new() -> Self {
-        let (sender, _) = broadcast::channel(16);
+        let (sender, _) = broadcast::channel(1000);
         Self {
             sender: BcastSender { sender },
         }
@@ -38,7 +37,6 @@ impl BcastChannel {
     fn new_receiver(&self) -> PyResult<BcastReceiver> {
         Ok(BcastReceiver {
             receiver: Arc::new(Mutex::new(self.sender.sender.subscribe())),
-            result: None,
         })
     }
 }
@@ -73,34 +71,19 @@ async fn receive_impl(recv: Arc<Mutex<Receiver<PyObject>>>) -> PyResult<PyObject
 
 #[pymethods]
 impl BcastReceiver {
-    fn ready(&mut self, py: Python<'_>) -> PyResult<bool> {
+    fn receive(&mut self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let recv = self.receiver.clone();
-        self.result = Some(
-            pyo3_asyncio::tokio::future_into_py(py, async move {
-                let result = tokio::task::spawn_blocking(|| {
-                    tokio::task::LocalSet::new()
-                        .block_on(pyo3_asyncio::tokio::get_runtime(), async move {
-                            receive_impl(recv).await
-                        })
-                });
-
-                result.await.unwrap()
-            })
-            .unwrap()
-            .into_py(py),
-        );
-
-        return Ok(true);
-    }
-
-    fn consume(&mut self, _py: Python<'_>) -> PyResult<PyObject> {
-        if let Some(result) = self.result.take() {
-            Ok(result.into())
-        } else {
-            Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
-                "Not ready",
-            ))
-        }
+        Ok(pyo3_asyncio::tokio::future_into_py(py, async move {
+            let result = tokio::task::spawn_blocking(|| {
+                tokio::task::LocalSet::new()
+                    .block_on(pyo3_asyncio::tokio::get_runtime(), async move {
+                        receive_impl(recv).await
+                    })
+            });
+            result.await.unwrap()
+        })
+        .unwrap()
+        .into_py(py))
     }
 }
 
