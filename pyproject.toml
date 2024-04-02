@@ -55,7 +55,7 @@ dev-mkdocs = [
   "mkdocs-include-markdown-plugin == 6.0.5",
   "mkdocs-literate-nav == 0.6.1",
   "mkdocs-macros-plugin == 1.0.5",
-  "mkdocs-material == 9.5.16",
+  "mkdocs-material == 9.5.17",
   "mkdocstrings[python] == 0.24.1",
   "pymdownx-superfence-filter-lines == 0.1.0",
 ]
