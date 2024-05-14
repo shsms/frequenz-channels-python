@@ -16,7 +16,7 @@ from ._generic import ChannelMessageT
 from ._receiver import Receiver, ReceiverStoppedError
 from ._sender import Sender, SenderError
 
-_logger = logging.Logger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class Broadcast(Generic[ChannelMessageT]):
