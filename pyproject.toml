@@ -57,6 +57,7 @@ dev-mkdocs = [
   "mkdocs-macros-plugin == 1.0.5",
   "mkdocs-material == 9.5.20",
   "mkdocstrings[python] == 0.25.0",
+  "mkdocstrings-python == 1.9.2",
   "pymdownx-superfence-filter-lines == 0.1.0",
 ]
 dev-mypy = [
