@@ -1,9 +1,17 @@
 # Frequenz channels Release Notes
 
-## Enhancements
+## Summary
 
-- The API documentation now shows the type of symbol in the table of contents.
+<!-- Here goes a general summary of what this release is about -->
+
+## Upgrading
+
+<!-- Here goes notes on how to upgrade from previous versions, including deprecations and what they should be replaced with -->
+
+## New Features
+
+<!-- Here goes the main new features and examples or instructions on how to use them -->
 
 ## Bug Fixes
 
-- Fix logger for the `Broadcast` channel (the log messages were missing the level, timestamp, etc.).
+<!-- Here goes notable bug fixes that are worth a special mention or explanation -->
