@@ -27,7 +27,7 @@ classifiers = [
 requires-python = ">= 3.11, < 4"
 dependencies = [
   "typing-extensions >= 4.5.0, < 5",
-  "watchfiles >= 0.15.0, < 0.22.0",
+  "watchfiles >= 0.15.0, < 0.23.0",
 ]
 dynamic = ["version"]
 
@@ -50,14 +50,14 @@ dev-mkdocs = [
   "frequenz-repo-config[lib] == 0.9.2",
   "markdown-callouts == 0.4.0",
   "markdown-svgbob == 202112.1022",
-  "mike == 2.1.0",
+  "mike == 2.1.1",
   "mkdocs-gen-files == 0.5.0",
-  "mkdocs-include-markdown-plugin == 6.0.6",
+  "mkdocs-include-markdown-plugin == 6.1.1",
   "mkdocs-literate-nav == 0.6.1",
   "mkdocs-macros-plugin == 1.0.5",
-  "mkdocs-material == 9.5.20",
-  "mkdocstrings[python] == 0.25.0",
-  "mkdocstrings-python == 1.9.2",
+  "mkdocs-material == 9.5.25",
+  "mkdocstrings[python] == 0.25.1",
+  "mkdocstrings-python == 1.10.3",
   "pymdownx-superfence-filter-lines == 0.1.0",
 ]
 dev-mypy = [
@@ -70,14 +70,14 @@ dev-noxfile = ["nox == 2024.4.15", "frequenz-repo-config[lib] == 0.9.2"]
 dev-pylint = [
   # For checking the noxfile, docs/ script, and tests
   "frequenz-channels[dev-mkdocs,dev-noxfile,dev-pytest]",
-  "pylint == 3.1.0",
+  "pylint == 3.2.2",
 ]
 dev-pytest = [
   "async-solipsism == 0.6",
   "frequenz-repo-config[extra-lint-examples] == 0.9.2",
-  "hypothesis == 6.100.2",
-  "pytest == 8.2.0",
-  "pytest-asyncio == 0.23.6",
+  "hypothesis == 6.103.0",
+  "pytest == 8.2.1",
+  "pytest-asyncio == 0.23.7",
   "pytest-mock == 3.14.0",
 ]
 dev = [
