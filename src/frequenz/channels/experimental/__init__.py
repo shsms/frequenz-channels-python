@@ -10,3 +10,9 @@ Warning:
 """
 
 from ._pipe import Pipe
+from ._relay_sender import RelaySender
+
+__all__ = [
+    "Pipe",
+    "RelaySender",
+]
