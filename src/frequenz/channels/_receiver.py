@@ -242,6 +242,25 @@ class Receiver(ABC, Generic[ReceiverMessageT_co]):
         """
         return _Mapper(receiver=self, mapping_function=mapping_function)
 
+    def filter(
+        self, filter_function: Callable[[ReceiverMessageT_co], bool], /
+    ) -> Receiver[ReceiverMessageT_co]:
+        """Apply a filter function on the messages on a receiver.
+
+        Tip:
+            The returned receiver type won't have all the methods of the original
+            receiver. If you need to access methods of the original receiver that are
+            not part of the `Receiver` interface you should save a reference to the
+            original receiver and use that instead.
+
+        Args:
+            filter_function: The function to be applied on incoming messages.
+
+        Returns:
+            A new receiver that applies the function on the received messages.
+        """
+        return _Filter(receiver=self, filter_function=filter_function)
+
 
 class ReceiverError(Error, Generic[ReceiverMessageT_co]):
     """An error that originated in a [Receiver][frequenz.channels.Receiver].
@@ -342,3 +361,94 @@ class _Mapper(
     def __repr__(self) -> str:
         """Return a string representation of the mapper."""
         return f"{type(self).__name__}({self._receiver!r}, {self._mapping_function!r})"
+
+
+class _Sentinel:
+    """A sentinel object to represent no value received yet."""
+
+    def __str__(self) -> str:
+        """Return a string representation of this sentinel."""
+        return "<No message ready to be consumed>"
+
+    def __repr__(self) -> str:
+        """Return a string representation of this sentinel."""
+        return "<No message ready to be consumed>"
+
+
+_SENTINEL = _Sentinel()
+
+
+class _Filter(Receiver[ReceiverMessageT_co], Generic[ReceiverMessageT_co]):
+    """Apply a filter function on the messages on a receiver."""
+
+    def __init__(
+        self,
+        *,
+        receiver: Receiver[ReceiverMessageT_co],
+        filter_function: Callable[[ReceiverMessageT_co], bool],
+    ) -> None:
+        """Initialize this receiver filter.
+
+        Args:
+            receiver: The input receiver.
+            filter_function: The function to apply on the input data.
+        """
+        self._receiver: Receiver[ReceiverMessageT_co] = receiver
+        """The input receiver."""
+
+        self._filter_function: Callable[[ReceiverMessageT_co], bool] = filter_function
+        """The function to apply on the input data."""
+
+        self._next_message: ReceiverMessageT_co | _Sentinel = _SENTINEL
+
+        self._recv_closed = False
+
+    async def ready(self) -> bool:
+        """Wait until the receiver is ready with a message or an error.
+
+        Once a call to `ready()` has finished, the message should be read with
+        a call to `consume()` (`receive()` or iterated over). The receiver will
+        remain ready (this method will return immediately) until it is
+        consumed.
+
+        Returns:
+            Whether the receiver is still active.
+        """
+        while await self._receiver.ready():
+            message = self._receiver.consume()
+            if self._filter_function(message):
+                self._next_message = message
+                return True
+        self._recv_closed = True
+        return False
+
+    def consume(self) -> ReceiverMessageT_co:
+        """Return a transformed message once `ready()` is complete.
+
+        Returns:
+            The next message that was received.
+
+        Raises:
+            ReceiverStoppedError: If the receiver stopped producing messages.
+            ReceiverError: If there is a problem with the receiver.
+        """
+        if self._recv_closed:
+            raise ReceiverStoppedError(self)
+        assert not isinstance(
+            self._next_message, _Sentinel
+        ), "`consume()` must be preceded by a call to `ready()`"
+
+        message = self._next_message
+        self._next_message = _SENTINEL
+        return message
+
+    def __str__(self) -> str:
+        """Return a string representation of the filter."""
+        return f"{type(self).__name__}:{self._receiver}:{self._filter_function}"
+
+    def __repr__(self) -> str:
+        """Return a string representation of the filter."""
+        return (
+            f"<{type(self).__name__} receiver={self._receiver!r} "
+            f"filter={self._filter_function!r} next_message={self._next_message!r}>"
+        )

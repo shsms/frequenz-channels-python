@@ -231,6 +231,23 @@ async def test_broadcast_map() -> None:
     assert (await receiver.receive()) is True
 
 
+async def test_broadcast_filter() -> None:
+    """Ensure filter keeps only the messages that pass the filter."""
+    chan = Broadcast[int](name="input-chan")
+    sender = chan.new_sender()
+
+    # filter out all numbers less than 10.
+    receiver: Receiver[int] = chan.new_receiver().filter(lambda num: num > 10)
+
+    await sender.send(8)
+    await sender.send(12)
+    await sender.send(5)
+    await sender.send(15)
+
+    assert (await receiver.receive()) == 12
+    assert (await receiver.receive()) == 15
+
+
 async def test_broadcast_receiver_drop() -> None:
     """Ensure deleted receivers get cleaned up."""
     chan = Broadcast[int](name="input-chan")
