@@ -35,6 +35,11 @@ Utilities to work with channels:
 * [select][frequenz.channels.select]: Iterate over the messages of all
   [receivers][frequenz.channels.Receiver] as new messages become available.
 
+* [LatestValueCache][frequenz.channels.LatestValueCache]: A cache that stores
+  the latest value in a receiver, providing a way to look up the latest value in
+  a stream, without having to wait, as long as there has been one value
+  received.
+
 Exception classes:
 
 * [Error][frequenz.channels.Error]: Base class for all errors in this
@@ -85,6 +90,7 @@ from ._generic import (
     SenderMessageT_co,
     SenderMessageT_contra,
 )
+from ._latest_value_cache import LatestValueCache
 from ._merge import Merger, merge
 from ._receiver import Receiver, ReceiverError, ReceiverStoppedError
 from ._select import (
@@ -104,6 +110,7 @@ __all__ = [
     "ChannelMessageT",
     "Error",
     "ErroredChannelT_co",
+    "LatestValueCache",
     "MappedMessageT_co",
     "Merger",
     "Receiver",
