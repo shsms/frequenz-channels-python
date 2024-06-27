@@ -16,6 +16,8 @@
 
 - **Experimental**: `Pipe`, which provides a pipe between two channels, by connecting a `Receiver` to a `Sender`.
 
+- `Receiver`s now have a `filter` method that applies a filter function on the messages on a receiver.
+
 ## Bug Fixes
 
 <!-- Here goes notable bug fixes that are worth a special mention or explanation -->
