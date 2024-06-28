@@ -336,9 +336,9 @@ class _Mapper(
         )  # pylint: disable=protected-access
 
     def __str__(self) -> str:
-        """Return a string representation of the timer."""
+        """Return a string representation of the mapper."""
         return f"{type(self).__name__}:{self._receiver}:{self._mapping_function}"
 
     def __repr__(self) -> str:
-        """Return a string representation of the timer."""
+        """Return a string representation of the mapper."""
         return f"{type(self).__name__}({self._receiver!r}, {self._mapping_function!r})"
