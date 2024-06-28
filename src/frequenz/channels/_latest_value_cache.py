@@ -1,10 +1,35 @@
 # License: MIT
 # Copyright © 2024 Frequenz Energy-as-a-Service GmbH
 
-"""A cache that stores the latest value in a receiver.
+"""The LatestValueCache caches the latest value in a receiver.
 
-It provides a way to look up the latest value in a stream without any delay,
-as long as there has been one value received.
+It provides a way to look up the latest value in a stream whenever required, as
+long as there has been one value received.
+
+[LatestValueCache][frequenz.channels.LatestValueCache] takes a
+[Receiver][frequenz.channels.Receiver] as an argument and stores the latest
+value received by that receiver.  As soon as a value is received, its
+[`has_value`][frequenz.channels.LatestValueCache.has_value] method returns
+`True`, and its [`get`][frequenz.channels.LatestValueCache.get] method returns
+the latest value received.  The `get` method will raise an exception if called
+before any messages have been received from the receiver.
+
+Example:
+```python
+from frequenz.channels import Broadcast, LatestValueCache
+
+channel = Broadcast[int](name="lvc_test")
+
+cache = LatestValueCache(channel.new_receiver())
+sender = channel.new_sender()
+
+assert not cache.has_value()
+
+await sender.send(5)
+
+assert cache.has_value()
+assert cache.get() == 5
+```
 """
 
 import asyncio
