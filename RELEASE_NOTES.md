@@ -10,7 +10,7 @@
 
 ## New Features
 
-<!-- Here goes the main new features and examples or instructions on how to use them -->
+- The `LatestValueCache` class, which used to be internal to the Frequenz SDK, is now available through the channels package.
 
 ## Bug Fixes
 
