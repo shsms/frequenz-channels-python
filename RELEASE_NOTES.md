@@ -12,6 +12,10 @@
 
 - The `LatestValueCache` class, which used to be internal to the Frequenz SDK, is now available through the channels package.
 
+- **Experimental**: `RelaySender`, which is a `Sender` that forwards the messages sent to it, to multiple senders.
+
+- **Experimental**: `Pipe`, which provides a pipe between two channels, by connecting a `Receiver` to a `Sender`.
+
 ## Bug Fixes
 
 <!-- Here goes notable bug fixes that are worth a special mention or explanation -->
