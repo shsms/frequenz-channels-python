@@ -2,11 +2,7 @@
 
 ## Summary
 
-<!-- Here goes a general summary of what this release is about -->
-
-## Upgrading
-
-<!-- Here goes notes on how to upgrade from previous versions, including deprecations and what they should be replaced with -->
+In addition to the new `LatestValueCache` and the ability to `filter` messages on `Receiver`s, this release introduces two "Experimental" features for providing interconnections between channels.
 
 ## New Features
 
@@ -17,7 +13,3 @@
 - **Experimental**: `Pipe`, which provides a pipe between two channels, by connecting a `Receiver` to a `Sender`.
 
 - `Receiver`s now have a `filter` method that applies a filter function on the messages on a receiver.
-
-## Bug Fixes
-
-<!-- Here goes notable bug fixes that are worth a special mention or explanation -->
