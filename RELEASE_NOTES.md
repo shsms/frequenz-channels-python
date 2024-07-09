@@ -2,14 +2,16 @@
 
 ## Summary
 
-In addition to the new `LatestValueCache` and the ability to `filter` messages on `Receiver`s, this release introduces two "Experimental" features for providing interconnections between channels.
+<!-- Here goes a general summary of what this release is about -->
+
+## Upgrading
+
+<!-- Here goes notes on how to upgrade from previous versions, including deprecations and what they should be replaced with -->
 
 ## New Features
 
-- The `LatestValueCache` class, which used to be internal to the Frequenz SDK, is now available through the channels package.
+<!-- Here goes the main new features and examples or instructions on how to use them -->
 
-- **Experimental**: `RelaySender`, which is a `Sender` that forwards the messages sent to it, to multiple senders.
+## Bug Fixes
 
-- **Experimental**: `Pipe`, which provides a pipe between two channels, by connecting a `Receiver` to a `Sender`.
-
-- `Receiver`s now have a `filter` method that applies a filter function on the messages on a receiver.
+<!-- Here goes notable bug fixes that are worth a special mention or explanation -->
