@@ -55,6 +55,25 @@ async for message in receiver.map(lambda x: x + 1):
 [`map()`][frequenz.channels.Receiver.map] returns a new full receiver, so you can
 use it in any of the ways described above.
 
+# Message Filtering
+
+If you need to filter the received messages, receivers provide a
+[`filter()`][frequenz.channels.Receiver.filter] method to easily do so:
+
+```python show_lines="6:"
+from frequenz.channels import Anycast
+
+channel = Anycast[int](name="test-channel")
+receiver = channel.new_receiver()
+
+async for message in receiver.filter(lambda x: x % 2 == 0):
+    print(message)  # Only even numbers will be printed
+```
+
+As with [`map()`][frequenz.channels.Receiver.map],
+[`filter()`][frequenz.channels.Receiver.filter] returns a new full receiver, so you can
+use it in any of the ways described above.
+
 # Error Handling
 
 !!! Tip inline end
@@ -254,10 +273,11 @@ class Receiver(ABC, Generic[ReceiverMessageT_co]):
             original receiver and use that instead.
 
         Args:
-            filter_function: The function to be applied on incoming messages.
+            filter_function: The function to be applied on incoming messages to
+                determine if they should be received.
 
         Returns:
-            A new receiver that applies the function on the received messages.
+            A new receiver that only receives messages that pass the filter.
         """
         return _Filter(receiver=self, filter_function=filter_function)
 
