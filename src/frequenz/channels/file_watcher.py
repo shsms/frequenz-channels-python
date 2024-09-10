@@ -70,6 +70,15 @@ class FileWatcher(Receiver[Event]):
     the [`path`][frequenz.channels.file_watcher.Event.path] where the change was
     observed.
 
+    Note:
+        The owner of the [`FileWatcher`][frequenz.channels.file_watcher.FileWatcher]
+        receiver is responsible for recreating the `FileWatcher` after it has been
+        cancelled or stopped.
+        For example, if a [`Task`][asyncio.Task] uses an asynchronous iterator to consume
+        events from the `FileWatcher` and the task is cancelled, the `FileWatcher` will
+        also stop. Therefore, the same `FileWatcher` instance cannot be reused for a new
+        task to consume events. In this case, a new FileWatcher instance must be created.
+
     # Event Types
 
     The following event types are available:
