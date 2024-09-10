@@ -14,4 +14,4 @@
 
 ## Bug Fixes
 
-<!-- Here goes notable bug fixes that are worth a special mention or explanation -->
+- `FileWatcher`: Fixed `ready()` method to return False when an error occurs.
