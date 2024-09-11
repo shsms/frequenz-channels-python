@@ -9,7 +9,7 @@ from datetime import timedelta
 
 import pytest
 
-from frequenz.channels import select, selected_from
+from frequenz.channels import ReceiverStoppedError, select, selected_from
 from frequenz.channels.file_watcher import Event, EventType, FileWatcher
 from frequenz.channels.timer import SkipMissedAndDrift, Timer
 
@@ -99,3 +99,36 @@ async def test_file_watcher_deletes(tmp_path: pathlib.Path) -> None:
     # Can be more because the watcher could take some time to trigger
     assert number_of_write >= 3
     assert number_of_events == 2
+
+
+@pytest.mark.integration
+async def test_file_watcher_exit_iterator(tmp_path: pathlib.Path) -> None:
+    """Test breaking the file watcher iterator.
+
+    Args:
+        tmp_path: A tmp directory to run the file watcher on. Created by pytest.
+    """
+    filename = tmp_path / "test-file"
+
+    number_of_writes = 0
+    expected_number_of_writes = 3
+
+    file_watcher = FileWatcher(paths=[str(tmp_path)])
+    timer = Timer(timedelta(seconds=0.1), SkipMissedAndDrift())
+
+    async for selected in select(file_watcher, timer):
+        if selected_from(selected, timer):
+            filename.write_text(f"{selected.message}")
+        elif selected_from(selected, file_watcher):
+            number_of_writes += 1
+            if number_of_writes == expected_number_of_writes:
+                file_watcher._stop_event.set()  # pylint: disable=protected-access
+                break
+
+    ready = await file_watcher.ready()
+    assert ready is False
+
+    with pytest.raises(ReceiverStoppedError):
+        file_watcher.consume()
+
+    assert number_of_writes == expected_number_of_writes
