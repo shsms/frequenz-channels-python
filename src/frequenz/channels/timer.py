@@ -586,7 +586,12 @@ class Timer(Receiver[timedelta]):
         """Whether the timer is running."""
         return not self._stopped
 
-    def reset(self, *, start_delay: timedelta = timedelta(0)) -> None:
+    def reset(
+        self,
+        *,
+        interval: timedelta | None = None,
+        start_delay: timedelta = timedelta(0),
+    ) -> None:
         """Reset the timer to start timing from now (plus an optional delay).
 
         If the timer was stopped, or not started yet, it will be started.
@@ -595,6 +600,8 @@ class Timer(Receiver[timedelta]):
         more details.
 
         Args:
+            interval: The new interval between ticks. If `None`, the current
+                interval is kept.
             start_delay: The delay before the timer should start. This has microseconds
                 resolution, anything smaller than a microsecond means no delay.
 
@@ -606,6 +613,9 @@ class Timer(Receiver[timedelta]):
 
         if start_delay_ms < 0:
             raise ValueError(f"`start_delay` can't be negative, got {start_delay}")
+
+        if interval is not None:
+            self._interval = _to_microseconds(interval)
 
         self._next_tick_time = self._now() + start_delay_ms + self._interval
 
