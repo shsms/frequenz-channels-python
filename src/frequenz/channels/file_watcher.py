@@ -22,6 +22,7 @@ import asyncio
 import pathlib
 from collections import abc
 from dataclasses import dataclass
+from datetime import timedelta
 from enum import Enum
 
 from watchfiles import Change, awatch
@@ -127,6 +128,9 @@ class FileWatcher(Receiver[Event]):
         self,
         paths: list[pathlib.Path | str],
         event_types: abc.Iterable[EventType] = frozenset(EventType),
+        *,
+        force_polling: bool = True,
+        polling_interval: timedelta = timedelta(seconds=1),
     ) -> None:
         """Initialize this file watcher.
 
@@ -134,6 +138,12 @@ class FileWatcher(Receiver[Event]):
             paths: The paths to watch for changes.
             event_types: The types of events to watch for. Defaults to watch for
                 all event types.
+            force_polling: Whether to explicitly force file polling to check for
+                changes. Note that even if set to False, file polling will still
+                be used as a fallback when the underlying file system does not
+                support event-based notifications.
+            polling_interval: The interval to poll for changes. Only relevant if
+                polling is enabled.
         """
         self.event_types: frozenset[EventType] = frozenset(event_types)
         """The types of events to watch for."""
@@ -144,7 +154,11 @@ class FileWatcher(Receiver[Event]):
             for path in paths
         ]
         self._awatch: abc.AsyncGenerator[set[FileChange], None] = awatch(
-            *self._paths, stop_event=self._stop_event, watch_filter=self._filter_events
+            *self._paths,
+            stop_event=self._stop_event,
+            watch_filter=self._filter_events,
+            force_polling=force_polling,
+            poll_delay_ms=int(polling_interval.total_seconds() * 1_000),
         )
         self._awatch_stopped_exc: Exception | None = None
         self._changes: set[FileChange] = set()
