@@ -523,6 +523,8 @@ class Timer(Receiver[timedelta]):
         See the documentation of `MissedTickPolicy` for details.
         """
 
+        self._reset_event = asyncio.Event()
+
         self._loop: asyncio.AbstractEventLoop = (
             loop if loop is not None else asyncio.get_running_loop()
         )
@@ -604,8 +606,13 @@ class Timer(Receiver[timedelta]):
 
         if start_delay_ms < 0:
             raise ValueError(f"`start_delay` can't be negative, got {start_delay}")
-        self._stopped = False
+
         self._next_tick_time = self._now() + start_delay_ms + self._interval
+
+        if self.is_running:
+            self._reset_event.set()
+
+        self._stopped = False
         self._current_drift = None
 
     def stop(self) -> None:
@@ -621,6 +628,7 @@ class Timer(Receiver[timedelta]):
         self._stopped = True
         # We need to make sure it's not None, otherwise `ready()` will start it
         self._next_tick_time = self._now()
+        self._reset_event.set()
 
     # We need a noqa here because the docs have a Raises section but the documented
     # exceptions are raised indirectly.
@@ -664,7 +672,15 @@ class Timer(Receiver[timedelta]):
         # could be reset while we are sleeping, in which case we need to recalculate
         # the time to the next tick and try again.
         while time_to_next_tick > 0:
-            await asyncio.sleep(time_to_next_tick / 1_000_000)
+            await next(
+                asyncio.as_completed(
+                    [
+                        asyncio.sleep(time_to_next_tick / 1_000_000),
+                        self._reset_event.wait(),
+                    ]
+                )
+            )
+            self._reset_event.clear()
             now = self._now()
             time_to_next_tick = self._next_tick_time - now
 
