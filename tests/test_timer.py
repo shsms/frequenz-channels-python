@@ -558,3 +558,60 @@ async def test_timer_skip_missed_and_drift(
     drift = await timer.receive()
     assert event_loop.time() == pytest.approx(interval * 14 + tolerance * 3 + 0.001)
     assert drift == pytest.approx(timedelta(seconds=0.0))
+
+
+async def test_timer_reset_with_new_interval(
+    event_loop: async_solipsism.EventLoop,  # pylint: disable=redefined-outer-name
+) -> None:
+    """Test resetting the timer with a new interval."""
+    initial_interval = timedelta(seconds=1.0)
+    new_interval = timedelta(seconds=2.0)
+    timer = Timer(initial_interval, TriggerAllMissed())
+
+    # Wait for the first tick
+    drift = await timer.receive()
+    assert drift == timedelta(seconds=0.0)
+    assert event_loop.time() == pytest.approx(1.0)
+
+    # Reset the timer with a new interval
+    timer.reset(interval=new_interval)
+
+    # The next tick should occur after the new interval
+    drift = await timer.receive()
+    assert drift == timedelta(seconds=0.0)
+    assert event_loop.time() == pytest.approx(3.0)
+
+    # Ensure the timer continues with the new interval
+    drift = await timer.receive()
+    assert drift == timedelta(seconds=0.0)
+    assert event_loop.time() == pytest.approx(5.0)
+
+
+async def test_timer_immediate_interruption_on_reset() -> None:
+    """Test that the timer is interrupted immediately upon reset."""
+    timer1 = Timer(timedelta(seconds=5.0), TriggerAllMissed())
+    timer2 = Timer(timedelta(seconds=1.0), TriggerAllMissed())
+    timer3 = Timer(timedelta(seconds=4.0), TriggerAllMissed())
+
+    timer_trigger_order = []
+
+    async def reset_timer1() -> None:
+        await timer2.receive()
+        timer_trigger_order.append(2)
+        timer1.reset(interval=timedelta(seconds=1.0))
+        timer2.stop()
+
+    async def receive_timer2() -> None:
+        await timer1.receive()
+        timer_trigger_order.append(1)
+
+    async def receive_timer3() -> None:
+        await timer3.receive()
+        timer_trigger_order.append(3)
+
+    task1 = asyncio.create_task(reset_timer1())
+    task2 = asyncio.create_task(receive_timer2())
+    task3 = asyncio.create_task(receive_timer3())
+
+    await asyncio.wait([task1, task2, task3])
+    assert timer_trigger_order == [2, 1, 3]
