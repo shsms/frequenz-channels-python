@@ -97,7 +97,11 @@ async def test_file_watcher_filter_events(
 
         assert awatch_mock.mock_calls == [
             mock.call(
-                pathlib.Path(good_path), stop_event=mock.ANY, watch_filter=filter_events
+                pathlib.Path(good_path),
+                stop_event=mock.ANY,
+                watch_filter=filter_events,
+                force_polling=True,
+                poll_delay_ms=1_000,
             )
         ]
         for event_type in EventType:
