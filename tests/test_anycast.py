@@ -3,24 +3,31 @@
 
 """Tests for the Channel implementation."""
 
+
 import asyncio
 
 import pytest
 
-from frequenz.channels import Anycast, ChannelClosedError, Receiver, Sender
+from frequenz.channels import (
+    Anycast,
+    ChannelClosedError,
+    Receiver,
+    ReceiverStoppedError,
+    Sender,
+    SenderError,
+)
 
 
 async def test_anycast() -> None:
     """Ensure sent messages are received by one receiver."""
-
-    acast: Anycast[int] = Anycast()
+    acast: Anycast[int] = Anycast(name="test")
 
     num_receivers = 5
     num_senders = 5
     expected_sum = num_senders * num_receivers * (num_receivers + 1) / 2
 
     # a list of `num_receivers` elements, where each element with get
-    # incremented by values the corrosponding receiver receives.  Once the run
+    # incremented by values the corresponding receiver receives.  Once the run
     # finishes, we will check if their sum equals `expected_sum`.
     recv_trackers = [0] * num_receivers
 
@@ -29,14 +36,16 @@ async def test_anycast() -> None:
         for ctr in range(num_receivers):
             await chan.send(ctr + 1)
 
-    async def update_tracker_on_receive(receiver_id: int, chan: Receiver[int]) -> None:
+    async def update_tracker_on_receive(receiver_id: int, recv: Receiver[int]) -> None:
         while True:
             try:
-                msg = await chan.receive()
-            except ChannelClosedError:
+                msg = await recv.receive()
+            except ReceiverStoppedError as err:
+                assert err.receiver is recv
+                assert isinstance(err.__cause__, ChannelClosedError)
                 return
             recv_trackers[receiver_id] += msg
-            # without the sleep, decomissioning receivers temporarily, all
+            # without the sleep, decommissioning receivers temporarily, all
             # messages go to the first receiver.
             await asyncio.sleep(0)
 
@@ -58,13 +67,17 @@ async def test_anycast() -> None:
     await acast.close()
     await receivers_runs
 
-    assert await after_close_sender.send(5) is False
-    with pytest.raises(ChannelClosedError):
+    with pytest.raises(SenderError):
+        await after_close_sender.send(5)
+    with pytest.raises(ReceiverStoppedError) as excinfo:
         await after_close_receiver.receive()
+    assert excinfo.value.receiver is after_close_receiver
+    assert isinstance(excinfo.value.__cause__, ChannelClosedError)
+    assert excinfo.value.__cause__.channel is acast
 
     actual_sum = 0
     for ctr in recv_trackers:
-        ## ensure all receivers have got messages
+        # ensure all receivers have got messages
         assert ctr > 0
         actual_sum += ctr
     assert actual_sum == expected_sum
@@ -72,18 +85,20 @@ async def test_anycast() -> None:
 
 async def test_anycast_after_close() -> None:
     """Ensure closed channels can't get new messages."""
-    acast: Anycast[int] = Anycast()
+    acast: Anycast[int] = Anycast(name="test")
 
     receiver = acast.new_receiver()
     sender = acast.new_sender()
 
-    assert await sender.send(2) is True
+    await sender.send(2)
 
     await acast.close()
 
-    assert await sender.send(5) is False
+    with pytest.raises(SenderError):
+        await sender.send(5)
+
     assert await receiver.receive() == 2
-    with pytest.raises(ChannelClosedError):
+    with pytest.raises(ReceiverStoppedError):
         await receiver.receive()
 
 
@@ -91,7 +106,7 @@ async def test_anycast_full() -> None:
     """Ensure send calls to a full channel are blocked."""
     buffer_size = 10
     timeout = 0.2
-    acast: Anycast[int] = Anycast(buffer_size)
+    acast: Anycast[int] = Anycast(name="test", limit=buffer_size)
 
     receiver = acast.new_receiver()
     sender = acast.new_sender()
@@ -127,24 +142,41 @@ async def test_anycast_full() -> None:
         msg = await asyncio.wait_for(receiver.receive(), timeout)
         assert msg == 100
     except asyncio.TimeoutError:
-        # should not timeout now, because we've just sent a value to the
+        # should not timeout now, because we've just sent a message to the
         # channel.
         assert False
 
 
-async def test_anycast_async_iterator() -> None:
-    """Check that the anycast receiver works as an async iterator."""
-    acast: Anycast[str] = Anycast()
+async def test_anycast_none_messages() -> None:
+    """Ensure None messages can be sent and received."""
+    acast: Anycast[int | None] = Anycast(name="test")
 
     sender = acast.new_sender()
     receiver = acast.new_receiver()
 
-    async def send_values() -> None:
+    await sender.send(5)
+    assert await receiver.receive() == 5
+
+    await sender.send(None)
+    assert await receiver.receive() is None
+
+    await sender.send(10)
+    assert await receiver.receive() == 10
+
+
+async def test_anycast_async_iterator() -> None:
+    """Check that the anycast receiver works as an async iterator."""
+    acast: Anycast[str] = Anycast(name="test")
+
+    sender = acast.new_sender()
+    receiver = acast.new_receiver()
+
+    async def send_messages() -> None:
         for val in ["one", "two", "three", "four", "five"]:
             await sender.send(val)
         await acast.close()
 
-    sender_task = asyncio.create_task(send_values())
+    sender_task = asyncio.create_task(send_messages())
 
     received = []
     async for recv in receiver:
@@ -157,7 +189,7 @@ async def test_anycast_async_iterator() -> None:
 
 async def test_anycast_map() -> None:
     """Ensure map runs on all incoming messages."""
-    chan = Anycast[int]()
+    chan: Anycast[int] = Anycast(name="test")
     sender = chan.new_sender()
 
     # transform int receiver into bool receiver.
@@ -168,3 +200,39 @@ async def test_anycast_map() -> None:
 
     assert (await receiver.receive()) is False
     assert (await receiver.receive()) is True
+
+
+async def test_anycast_filter() -> None:
+    """Ensure filter keeps only the messages that pass the filter."""
+    chan = Anycast[int](name="input-chan")
+    sender = chan.new_sender()
+
+    # filter out all numbers less than 10.
+    receiver: Receiver[int] = chan.new_receiver().filter(lambda num: num > 10)
+
+    await sender.send(8)
+    await sender.send(12)
+    await sender.send(5)
+    await sender.send(15)
+
+    assert (await receiver.receive()) == 12
+    assert (await receiver.receive()) == 15
+
+
+async def test_receiver_close_behavior() -> None:
+    """Ensure close() is immediate for anycast channels."""
+    acast: Anycast[int] = Anycast(name="close_behavior_test")
+
+    sender = acast.new_sender()
+    receiver = acast.new_receiver()
+
+    await sender.send(1)
+    receiver.close()
+
+    with pytest.raises(SenderError):
+        await sender.send(2)
+
+    assert await receiver.receive() == 1
+
+    with pytest.raises(ReceiverStoppedError):
+        await receiver.receive()
